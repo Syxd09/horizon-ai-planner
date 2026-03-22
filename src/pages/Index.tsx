@@ -14,7 +14,9 @@ export default function Index() {
     return (
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <Scene3D className="absolute inset-0 z-0" />
-        <div className="absolute inset-0 bg-background/40 z-[1]" />
+        <div className="absolute inset-0 bg-background/50 z-[1]" />
+        {/* Radial gradient overlay for depth */}
+        <div className="absolute inset-0 z-[2] pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 30%, hsl(230 15% 8% / 0.7) 80%)" }} />
         <div className="relative z-10 w-full px-4">
           <AuthForm onLogin={() => setIsLoggedIn(true)} />
         </div>
@@ -23,17 +25,24 @@ export default function Index() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <Scene3D className="fixed inset-0 z-0 opacity-30" />
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <Scene3D className="fixed inset-0 z-0 opacity-20" />
+      {/* Top gradient bleed */}
+      <div className="fixed top-0 left-0 right-0 h-48 pointer-events-none z-[1]" style={{ background: "linear-gradient(to bottom, hsl(230 15% 8% / 0.9), transparent)" }} />
+
       <div className="relative z-10 min-h-screen">
         <DashboardHeader onLogout={() => setIsLoggedIn(false)} />
 
-        <main className="max-w-7xl mx-auto px-4 md:px-6 pb-12 space-y-6">
-          <div className="pt-4 space-y-1" style={{ animation: "fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
+        <main className="max-w-7xl mx-auto px-4 md:px-6 pb-16 space-y-8">
+          {/* Hero heading */}
+          <div className="pt-8 pb-2 space-y-2" style={{ animation: "fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
+            <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Dashboard</p>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground" style={{ lineHeight: "1.1" }}>
               Your <span className="text-gradient-warm">Mission Control</span>
             </h1>
-            <p className="text-muted-foreground">Track goals, capture ideas, and let AI guide your path.</p>
+            <p className="text-muted-foreground text-sm max-w-lg" style={{ textWrap: "pretty" }}>
+              Track goals, capture ideas, and let AI guide your path forward.
+            </p>
           </div>
 
           <StatsBar />

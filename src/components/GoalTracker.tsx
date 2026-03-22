@@ -80,27 +80,38 @@ export default function GoalTracker() {
     }));
   };
 
+  const getProgressColor = (p: number) => {
+    if (p >= 80) return "from-secondary to-secondary/60";
+    if (p >= 50) return "from-primary to-primary/60";
+    return "from-primary/80 to-primary/40";
+  };
+
   return (
     <div className="glass-card p-6 space-y-5">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/15">
+        <div className="relative p-2 rounded-xl bg-primary/10 border border-primary/20">
           <Target className="w-5 h-5 text-primary" />
         </div>
-        <h2 className="text-lg font-semibold text-foreground">Goals</h2>
-        <span className="ml-auto text-xs font-mono text-muted-foreground tabular-nums">
-          {goals.filter(g => g.completed).length}/{goals.length}
-        </span>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Goals</h2>
+          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Track progress</p>
+        </div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <span className="text-lg font-bold tabular-nums text-foreground">{goals.filter(g => g.completed).length}</span>
+          <span className="text-xs text-muted-foreground">/</span>
+          <span className="text-xs font-mono text-muted-foreground tabular-nums">{goals.length}</span>
+        </div>
       </div>
 
       <div className="flex gap-2">
         <Input
-          placeholder="Add a new goal..."
+          placeholder="What's your next goal?"
           value={newGoal}
           onChange={(e) => setNewGoal(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addGoal()}
-          className="bg-muted/50 border-border/50 h-10"
+          className="bg-muted/30 border-border/40 h-10 text-sm"
         />
-        <Button onClick={addGoal} size="icon" className="h-10 w-10 shrink-0 active:scale-95 transition-transform">
+        <Button onClick={addGoal} size="icon" className="h-10 w-10 shrink-0 active:scale-95 transition-transform rounded-xl">
           <Plus className="w-4 h-4" />
         </Button>
       </div>
@@ -109,34 +120,33 @@ export default function GoalTracker() {
         {goals.map((goal, i) => (
           <div
             key={goal.id}
-            className="group rounded-lg border border-border/30 bg-muted/20 overflow-hidden transition-all duration-300 hover:border-border/60"
+            className="group rounded-xl border border-border/30 bg-muted/10 overflow-hidden transition-all duration-300 hover:border-border/50 hover:bg-muted/20"
             style={{ animation: `slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${i * 80}ms forwards`, opacity: 0 }}
           >
-            <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={() => setExpandedGoal(expandedGoal === goal.id ? null : goal.id)}>
+            <div className="flex items-center gap-3 p-3.5 cursor-pointer" onClick={() => setExpandedGoal(expandedGoal === goal.id ? null : goal.id)}>
               <button
                 onClick={(e) => { e.stopPropagation(); toggleGoal(goal.id); }}
                 className="shrink-0 active:scale-90 transition-transform"
               >
                 {goal.completed
                   ? <CheckCircle2 className="w-5 h-5 text-secondary" />
-                  : <Circle className="w-5 h-5 text-muted-foreground" />
+                  : <Circle className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
                 }
               </button>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium truncate ${goal.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                   {goal.title}
                 </p>
-                <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-700 ease-out"
-                    style={{
-                      width: `${goal.progress}%`,
-                      background: goal.progress >= 80 ? "hsl(var(--secondary))" : "hsl(var(--primary))",
-                    }}
+                    className={`h-full rounded-full bg-gradient-to-r ${getProgressColor(goal.progress)} transition-all duration-700 ease-out`}
+                    style={{ width: `${goal.progress}%` }}
                   />
                 </div>
               </div>
-              <span className="text-xs font-mono text-muted-foreground tabular-nums shrink-0">{goal.progress}%</span>
+              <span className={`text-xs font-mono tabular-nums shrink-0 px-1.5 py-0.5 rounded ${
+                goal.progress >= 80 ? "text-secondary bg-secondary/10" : "text-muted-foreground"
+              }`}>{goal.progress}%</span>
               <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedGoal === goal.id ? "rotate-90" : ""}`} />
               <button
                 onClick={(e) => { e.stopPropagation(); deleteGoal(goal.id); }}
@@ -147,12 +157,12 @@ export default function GoalTracker() {
             </div>
 
             {expandedGoal === goal.id && goal.milestones.length > 0 && (
-              <div className="px-3 pb-3 pl-11 space-y-1.5" style={{ animation: "slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
+              <div className="px-3.5 pb-3.5 pl-12 space-y-1.5 border-t border-border/20 pt-2.5" style={{ animation: "slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
                 {goal.milestones.map(m => (
                   <button
                     key={m.id}
                     onClick={() => toggleMilestone(goal.id, m.id)}
-                    className="flex items-center gap-2 w-full text-left active:scale-[0.98] transition-transform"
+                    className="flex items-center gap-2.5 w-full text-left active:scale-[0.98] transition-transform py-1 rounded-lg hover:bg-muted/20 px-2 -mx-2"
                   >
                     {m.done
                       ? <CheckCircle2 className="w-3.5 h-3.5 text-secondary shrink-0" />

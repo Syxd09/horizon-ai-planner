@@ -1,45 +1,155 @@
-import { Target, StickyNote, TrendingUp, Flame, ArrowUpRight, ArrowDownRight } from "lucide-react";
-
-const stats = [
-  { label: "Active Goals", value: "3", icon: Target, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", trend: "+1", up: true },
-  { label: "Notes", value: "3", icon: StickyNote, color: "text-secondary", bg: "bg-secondary/10", border: "border-secondary/20", trend: "+2", up: true },
-  { label: "Completion", value: "63%", icon: TrendingUp, color: "text-accent", bg: "bg-accent/10", border: "border-accent/20", trend: "+8%", up: true },
-  { label: "Streak", value: "7d", icon: Flame, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", trend: "Best!", up: true },
-];
+import { Trophy, Activity, Flame, Target, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 export default function StatsBar() {
+  const [stats, setStats] = useState({
+    goals: [],
+    completion: 0,
+    doneCount: 0,
+    streak: 1,
+    habits: 4,
+    wins: 0
+  });
+
+  useEffect(() => {
+    const updateStats = () => {
+      const goals = JSON.parse(localStorage.getItem("orbit-goals") || "[]");
+      const history = JSON.parse(localStorage.getItem("orbit-history") || "{}");
+      const habits = JSON.parse(localStorage.getItem("orbit-habits") || "[]");
+      
+      const doneCount = goals.filter((g: any) => g.completed).length;
+      const totalCount = goals.length;
+      const todayCompletion = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+      
+      // Update today's history
+      const today = new Date().toISOString().split('T')[0];
+      if (totalCount > 0) {
+        history[today] = todayCompletion;
+        localStorage.setItem("orbit-history", JSON.stringify(history));
+      }
+
+      // Calculate Weekly Avg
+      let totalWeeklyProgress = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dStr = d.toISOString().split('T')[0];
+        totalWeeklyProgress += history[dStr] || 0;
+      }
+      const weeklyAvg = Math.round(totalWeeklyProgress / 7);
+
+      // Calculate Streak
+      let streakCount = 0;
+      let checkDate = new Date();
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        // Streak continues if completion > 0 (or some threshold)
+        if (history[dateStr] && history[dateStr] > 0) {
+          streakCount++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      
+      setStats({
+        goals,
+        completion: todayCompletion,
+        doneCount,
+        streak: streakCount || 1,
+        habits: habits.length || 0,
+        wins: Object.values(history).filter((v: any) => v >= 100).length // Fully completed days
+      });
+    };
+
+    updateStats();
+    window.addEventListener("storage", updateStats);
+    const interval = setInterval(updateStats, 2000);
+    return () => {
+      window.removeEventListener("storage", updateStats);
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {stats.map((stat, i) => (
-        <div
-          key={stat.label}
-          className={`group relative glass-card p-4 overflow-hidden border ${stat.border} hover:border-opacity-60 transition-all duration-300 active:scale-[0.98]`}
-          style={{ animation: `slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${i * 80}ms forwards`, opacity: 0 }}
-        >
-          {/* Subtle glow */}
-          <div className={`absolute -top-8 -right-8 w-24 h-24 ${stat.bg} rounded-full blur-2xl opacity-0 group-hover:opacity-60 transition-opacity duration-500`} />
-
-          <div className="relative flex items-start justify-between">
-            <div>
-              <p className="text-2xl font-bold tabular-nums text-foreground tracking-tight">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
-            </div>
-            <div className={`p-2 rounded-xl ${stat.bg} border ${stat.border}`}>
-              <stat.icon className={`w-4 h-4 ${stat.color}`} />
-            </div>
+    <div className="flex flex-col xl:flex-row gap-6">
+      {/* Main Progress Card - Circular */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex-1 soft-card bg-pastel-pink/30 p-8 flex items-center justify-between group overflow-hidden relative"
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-pastel-pink rounded-full blur-3xl opacity-20 -mr-10 -mt-10" />
+        
+        <div className="space-y-4 relative">
+          <div>
+            <h3 className="text-2xl font-black text-foreground">My Plan</h3>
+            <p className="text-muted-foreground/60 text-sm font-bold mt-1">For Today</p>
           </div>
-
-          <div className="mt-3 flex items-center gap-1">
-            {stat.up ? (
-              <ArrowUpRight className="w-3 h-3 text-secondary" />
-            ) : (
-              <ArrowDownRight className="w-3 h-3 text-destructive" />
-            )}
-            <span className="text-[10px] font-mono text-secondary">{stat.trend}</span>
-            <span className="text-[10px] text-muted-foreground ml-0.5">this week</span>
+          <div className="flex items-center gap-2">
+            <span className="text-3xl font-black text-foreground">{stats.doneCount}</span>
+            <span className="text-muted-foreground/30 text-lg font-bold">/</span>
+            <span className="text-muted-foreground/40 text-lg font-bold">{stats.goals.length} completed</span>
           </div>
         </div>
-      ))}
+
+        <div className="relative w-32 h-32 flex items-center justify-center">
+          <svg className="w-full h-full transform -rotate-90">
+            <circle
+              cx="64"
+              cy="64"
+              r="58"
+              stroke="currentColor"
+              strokeWidth="12"
+              fill="transparent"
+              className="text-white/40"
+            />
+            <motion.circle
+              cx="64"
+              cy="64"
+              r="58"
+              stroke="currentColor"
+              strokeWidth="12"
+              fill="transparent"
+              strokeDasharray="364.4"
+              initial={{ strokeDashoffset: 364.4 }}
+              animate={{ strokeDashoffset: 364.4 - (364.4 * stats.completion) / 100 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className="text-pastel-pink-foreground"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-xl font-black text-foreground">{stats.completion}%</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-2 gap-4 xl:w-[480px]">
+        {[
+          { label: "Wins", value: `${stats.wins}`, icon: Trophy, color: "bg-pastel-pink", iconColor: "text-pastel-pink-foreground" },
+          { label: "Weekly Avg", value: `${Math.round(Object.values(JSON.parse(localStorage.getItem("orbit-history") || "{}")).reduce((a:any, b:any) => a + b, 0) / 7)}%`, icon: Activity, color: "bg-pastel-green", iconColor: "text-pastel-green-foreground" },
+          { label: "Total Habits", value: stats.habits.toString(), icon: Target, color: "bg-pastel-blue", iconColor: "text-pastel-blue-foreground" },
+          { label: "Best Streak", value: `${stats.streak} Days`, icon: Flame, color: "bg-pastel-yellow", iconColor: "text-pastel-yellow-foreground" },
+        ].map((item, i) => (
+          <motion.div
+            key={item.label}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="soft-card p-4 flex flex-col items-center justify-center text-center space-y-3 hover:bg-muted/30 transition-colors"
+          >
+            <div className={`p-2.5 rounded-xl ${item.color}`}>
+              <item.icon className={`w-5 h-5 ${item.iconColor}`} />
+            </div>
+            <div>
+              <p className="text-lg font-black text-foreground leading-none">{item.value}</p>
+              <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mt-2">{item.label}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }

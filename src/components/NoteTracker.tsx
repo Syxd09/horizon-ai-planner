@@ -1,30 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { StickyNote, Plus, Trash2, Clock, MoreHorizontal } from "lucide-react";
+import { StickyNote, Plus, Trash2, Clock, Sparkles, Brain, Loader2, Target, Tag, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { generateContent } from "@/lib/ai-service";
+import { toast } from "sonner";
 
 interface Note {
   id: string;
   content: string;
-  createdAt: Date;
+  createdAt: string;
   color: string;
-  accent: string;
+  tag?: string;
+  suggestion?: string;
 }
 
-const colorPairs = [
-  { border: "border-l-primary", accent: "bg-primary/10" },
-  { border: "border-l-secondary", accent: "bg-secondary/10" },
-  { border: "border-l-accent", accent: "bg-accent/10" },
-  { border: "border-l-destructive", accent: "bg-destructive/10" },
-];
-
-const initialNotes: Note[] = [
-  { id: "1", content: "Research best practices for state management — considering Zustand vs Jotai for the next sprint.", createdAt: new Date(Date.now() - 86400000 * 2), color: colorPairs[0].border, accent: colorPairs[0].accent },
-  { id: "2", content: "Meeting notes: stakeholders want the dashboard to show real-time analytics. Need WebSocket integration.", createdAt: new Date(Date.now() - 86400000), color: colorPairs[1].border, accent: colorPairs[1].accent },
-  { id: "3", content: "Idea: build a habit tracker feature that integrates with the goals system. Users can link daily habits to their goals.", createdAt: new Date(Date.now() - 3600000 * 4), color: colorPairs[2].border, accent: colorPairs[2].accent },
-];
-
-function timeAgo(date: Date): string {
+function timeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
@@ -35,20 +27,46 @@ function timeAgo(date: Date): string {
   return `${days}d ago`;
 }
 
+const getAutoTag = (content: string) => {
+  const c = content.toLowerCase();
+  if (c.includes("fix") || c.includes("bug") || c.includes("code") || c.includes("api")) return "TECHNICAL";
+  if (c.includes("plan") || c.includes("strategy") || c.includes("market") || c.includes("meeting")) return "STRATEGIC";
+  if (c.includes("buy") || c.includes("cost") || c.includes("budget") || c.includes("price")) return "FINANCIAL";
+  return "INTEL";
+};
+
 export default function NoteTracker() {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>(() => {
+    const saved = localStorage.getItem("orbit-notes");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [newNote, setNewNote] = useState("");
+  const [noteProcessingId, setNoteProcessingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("orbit-notes", JSON.stringify(notes));
+  }, [notes]);
+
+  const cycleTag = (id: string) => {
+    const TAGS = ["INTEL", "TECHNICAL", "STRATEGIC", "FINANCIAL"];
+    setNotes(notes.map(n => {
+      if (n.id !== id) return n;
+      const currentIdx = TAGS.indexOf(n.tag || "INTEL");
+      const nextTag = TAGS[(currentIdx + 1) % TAGS.length];
+      return { ...n, tag: nextTag };
+    }));
+  };
 
   const addNote = () => {
     if (!newNote.trim()) return;
-    const pair = colorPairs[Math.floor(Math.random() * colorPairs.length)];
     setNotes([{
       id: Date.now().toString(),
       content: newNote,
-      createdAt: new Date(),
-      color: pair.border,
-      accent: pair.accent,
+      createdAt: new Date().toISOString(),
+      color: "border-l-primary",
+      tag: getAutoTag(newNote)
     }, ...notes]);
     setNewNote("");
     setIsAdding(false);
@@ -58,66 +76,195 @@ export default function NoteTracker() {
     setNotes(notes.filter(n => n.id !== id));
   };
 
+  const summarizeNote = async (id: string, content: string) => {
+    setNoteProcessingId(id);
+    try {
+      const summary = await generateContent(`Summarize this note in one very short, tactical sentence: "${content}"`, "groq");
+      if (summary) {
+        setNotes(notes.map(n => n.id === id ? { ...n, content: summary, tag: getAutoTag(summary) } : n));
+        toast.success("Intel summarized");
+      }
+    } catch (error) {
+      toast.error("Summarization offline");
+    } finally {
+      setNoteProcessingId(null);
+    }
+  };
+
+  const suggestActions = async (id: string, content: string) => {
+    setIsSuggesting(id);
+    try {
+      const suggestion = await generateContent(`Based on this note: "${content}", suggest one specific next action. Keep it under 10 words.`, "google");
+      if (suggestion) {
+        setNotes(notes.map(n => n.id === id ? { ...n, suggestion } : n));
+        toast.info(`Suggestion: ${suggestion}`, { duration: 5000 });
+      }
+    } catch (error) {
+      toast.error("Suggestions offline");
+    } finally {
+      setIsSuggesting(null);
+    }
+  };
+
+  const deployAsGoal = (note: Note) => {
+    if (!note.suggestion) return;
+    const savedGoals = JSON.parse(localStorage.getItem("orbit-goals") || "[]");
+    const newGoal = {
+      id: Date.now().toString(),
+      title: note.suggestion,
+      progress: 0,
+      completed: false,
+      milestones: [],
+      priority: "Medium",
+      category: "mechanic",
+      time: "Now",
+      context: `Extracted from intel: "${note.content}"`
+    };
+    localStorage.setItem("orbit-goals", JSON.stringify([newGoal, ...savedGoals]));
+    window.dispatchEvent(new Event("storage"));
+    toast.success("Intelligence deployed to objectives!");
+  };
+
   return (
-    <div className="glass-card p-6 space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="relative p-2 rounded-xl bg-secondary/10 border border-secondary/20">
-          <StickyNote className="w-5 h-5 text-secondary" />
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="soft-card p-6 space-y-6 flex flex-col min-h-[400px]"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-pastel-blue/30 transition-transform hover:scale-110">
+            <StickyNote className="w-5 h-5 text-pastel-blue-foreground" />
+          </div>
+          <h2 className="text-xl font-black text-foreground">Intelligence Briefs</h2>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Notes</h2>
-          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Capture ideas</p>
-        </div>
-        <span className="ml-auto text-xs font-mono text-muted-foreground tabular-nums px-2 py-0.5 rounded-full bg-muted/30 border border-border/30">{notes.length}</span>
+        <span className="text-[10px] font-black text-muted-foreground/40 bg-muted/50 px-2 py-1 rounded-lg uppercase tracking-widest">{notes.length} Active</span>
       </div>
 
-      {isAdding ? (
-        <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4" style={{ animation: "slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
-          <Textarea
-            placeholder="What's on your mind?"
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            className="bg-muted/30 border-border/40 min-h-[100px] resize-none text-sm"
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <Button onClick={addNote} size="sm" className="active:scale-95 transition-transform text-xs h-8">Save Note</Button>
-            <Button onClick={() => { setIsAdding(false); setNewNote(""); }} size="sm" variant="ghost" className="text-muted-foreground text-xs h-8">Cancel</Button>
-          </div>
-        </div>
-      ) : (
-        <Button
-          onClick={() => setIsAdding(true)}
-          variant="outline"
-          className="w-full h-10 border-dashed border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98] transition-all text-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" /> Add Note
-        </Button>
-      )}
-
-      <div className="space-y-2 max-h-[350px] overflow-y-auto scrollbar-thin pr-1">
-        {notes.map((note, i) => (
-          <div
-            key={note.id}
-            className={`group rounded-xl border border-border/30 bg-muted/10 p-3.5 border-l-[3px] ${note.color} transition-all duration-300 hover:border-border/50 hover:bg-muted/20`}
-            style={{ animation: `slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${i * 80}ms forwards`, opacity: 0 }}
+      <AnimatePresence mode="wait">
+        {isAdding ? (
+          <motion.div 
+            key="adding"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="space-y-4 rounded-2xl bg-muted/30 p-4 border border-border/50"
           >
-            <p className="text-sm text-foreground/90 leading-relaxed" style={{ overflowWrap: "break-word", textWrap: "pretty" }}>{note.content}</p>
-            <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/20">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                <span className="text-[11px] font-mono">{timeAgo(note.createdAt)}</span>
-              </div>
-              <button
-                onClick={() => deleteNote(note.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity active:scale-90 p-1 rounded-md hover:bg-destructive/10"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive transition-colors" />
-              </button>
+            <Textarea
+              placeholder="Record tactical insights..."
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              className="bg-transparent border-none focus-visible:ring-0 min-h-[120px] resize-none text-sm p-0 placeholder:text-muted-foreground/40 font-medium"
+              autoFocus
+            />
+            <div className="flex gap-2 pt-2 border-t border-border/50">
+              <Button onClick={addNote} size="sm" className="h-9 px-4 rounded-xl bg-black text-white hover:bg-black/80 transition-all font-black text-[10px] uppercase tracking-widest">Execute</Button>
+              <Button onClick={() => { setIsAdding(false); setNewNote(""); }} size="sm" variant="ghost" className="h-9 px-4 text-muted-foreground/40 rounded-xl font-black text-[10px] uppercase tracking-widest">Abort</Button>
             </div>
-          </div>
-        ))}
+          </motion.div>
+        ) : (
+          <motion.button
+            key="idle"
+            layoutId="add-note-btn"
+            onClick={() => setIsAdding(true)}
+            className="w-full h-14 bg-muted/20 border-2 border-dashed border-border/50 rounded-[1.5rem] text-muted-foreground/40 hover:text-foreground hover:border-primary/40 hover:bg-white transition-all flex items-center justify-center gap-3 group"
+          >
+            <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" /> 
+            <span className="text-sm font-black uppercase tracking-widest">Add Daily Activity</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <div className="space-y-4 flex-1">
+        <AnimatePresence mode="popLayout">
+          {notes.length === 0 ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-12 text-center"
+            >
+              <p className="text-sm text-muted-foreground/30 font-bold italic">No intelligence captured today...</p>
+            </motion.div>
+          ) : (
+            notes.map((note) => (
+              <motion.div
+                key={note.id}
+                layout
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className={`group p-5 bg-white border border-border/40 rounded-[1.5rem] relative hover:shadow-xl hover:shadow-primary/5 transition-all`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-foreground leading-relaxed pr-8">{note.content}</p>
+                    <div className="flex items-center gap-3 opacity-40">
+                      <Clock className="w-3 h-3" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{timeAgo(note.createdAt)}</span>
+                    </div>
+                  </div>
+                  {note.tag && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); cycleTag(note.id); }}
+                      className="text-[8px] font-black px-2 py-1 rounded bg-muted/60 text-muted-foreground/60 tracking-widest uppercase hover:bg-primary/10 hover:text-primary transition-all"
+                    >
+                      {note.tag}
+                    </button>
+                  )}
+                </div>
+                
+                {note.suggestion && (
+                    <div className="mb-4 p-3 rounded-xl bg-pastel-blue/20 border border-pastel-blue/30 flex items-center justify-between group/s">
+                        <div className="flex items-center gap-2 pr-4 min-w-0">
+                           <Target className="w-3 h-3 text-pastel-blue-foreground shrink-0" />
+                           <p className="text-[10px] font-black text-pastel-blue-foreground uppercase tracking-tight truncate">Target: {note.suggestion}</p>
+                        </div>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => deployAsGoal(note)}
+                            className="h-7 w-7 rounded-lg bg-white/50 text-pastel-blue-foreground hover:bg-white shadow-sm transition-all"
+                            title="Deploy as Objective"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </Button>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => summarizeNote(note.id, note.content)}
+                    disabled={noteProcessingId === note.id}
+                    className="h-8 w-8 hover:bg-pastel-green/20 hover:text-pastel-green-foreground rounded-lg"
+                  >
+                    {noteProcessingId === note.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => suggestActions(note.id, note.content)}
+                    disabled={isSuggesting === note.id}
+                    className="h-8 w-8 hover:bg-pastel-yellow/20 hover:text-pastel-yellow-foreground rounded-lg"
+                  >
+                    {isSuggesting === note.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Brain className="w-3.5 h-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteNote(note.id)}
+                    className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive rounded-lg"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

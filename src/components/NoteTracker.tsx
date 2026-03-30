@@ -37,7 +37,7 @@ const getAutoTag = (content: string) => {
 
 export default function NoteTracker() {
   const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem("orbit-notes");
+    const saved = localStorage.getItem("horizon-notes");
     return saved ? JSON.parse(saved) : [];
   });
   const [newNote, setNewNote] = useState("");
@@ -46,7 +46,7 @@ export default function NoteTracker() {
   const [isSuggesting, setIsSuggesting] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("orbit-notes", JSON.stringify(notes));
+    localStorage.setItem("horizon-notes", JSON.stringify(notes));
   }, [notes]);
 
   const cycleTag = (id: string) => {
@@ -108,7 +108,7 @@ export default function NoteTracker() {
 
   const deployAsGoal = (note: Note) => {
     if (!note.suggestion) return;
-    const savedGoals = JSON.parse(localStorage.getItem("orbit-goals") || "[]");
+    const savedGoals = JSON.parse(localStorage.getItem("horizon-goals") || "[]");
     const newGoal = {
       id: Date.now().toString(),
       title: note.suggestion,
@@ -120,7 +120,7 @@ export default function NoteTracker() {
       time: "Now",
       context: `Extracted from intel: "${note.content}"`
     };
-    localStorage.setItem("orbit-goals", JSON.stringify([newGoal, ...savedGoals]));
+    localStorage.setItem("horizon-goals", JSON.stringify([newGoal, ...savedGoals]));
     window.dispatchEvent(new Event("storage"));
     toast.success("Intelligence deployed to objectives!");
   };

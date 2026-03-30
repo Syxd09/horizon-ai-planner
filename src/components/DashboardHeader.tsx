@@ -23,7 +23,7 @@ export default function DashboardHeader({ onLogout }: DashboardHeaderProps) {
           <div className="p-2 rounded-xl bg-primary/10 transition-transform hover:scale-110 duration-500">
             <Orbit className="w-6 h-6 text-primary" />
           </div>
-          <span className="text-xl font-black tracking-tighter text-foreground">ORBIT</span>
+          <span className="text-xl font-black tracking-tighter text-foreground">HORIZON</span>
         </div>
 
         {/* Global Search - Simplified */}
@@ -69,11 +69,11 @@ export default function DashboardHeader({ onLogout }: DashboardHeaderProps) {
 
           <div className="flex items-center gap-3 pl-4 border-l border-border/50">
             {(() => {
-              const [user, setUser] = useState({ name: "Commander", email: "hq@orbit.ai" });
+              const [user, setUser] = useState({ name: "Commander", email: "hq@horizon.ai" });
               
               useEffect(() => {
                 const update = () => {
-                  const saved = localStorage.getItem("orbit-user");
+                  const saved = localStorage.getItem("horizon-user");
                   if (saved) setUser(JSON.parse(saved));
                 };
                 update();
@@ -94,7 +94,7 @@ export default function DashboardHeader({ onLogout }: DashboardHeaderProps) {
                   <div className="hidden sm:flex flex-col">
                     <span className="text-xs font-black text-foreground/80 leading-none truncate max-w-[100px]">{user.name}</span>
                     <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-1">
-                      Orbital Level 01
+                      Horizon Level 01
                     </span>
                   </div>
                 </motion.div>

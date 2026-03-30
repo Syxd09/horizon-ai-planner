@@ -14,9 +14,9 @@ export default function StatsBar() {
 
   useEffect(() => {
     const updateStats = () => {
-      const goals = JSON.parse(localStorage.getItem("orbit-goals") || "[]");
-      const history = JSON.parse(localStorage.getItem("orbit-history") || "{}");
-      const habits = JSON.parse(localStorage.getItem("orbit-habits") || "[]");
+      const goals = JSON.parse(localStorage.getItem("horizon-goals") || "[]");
+      const history = JSON.parse(localStorage.getItem("horizon-history") || "{}");
+      const habits = JSON.parse(localStorage.getItem("horizon-habits") || "[]");
       
       const doneCount = goals.filter((g: any) => g.completed).length;
       const totalCount = goals.length;
@@ -26,7 +26,7 @@ export default function StatsBar() {
       const today = new Date().toISOString().split('T')[0];
       if (totalCount > 0) {
         history[today] = todayCompletion;
-        localStorage.setItem("orbit-history", JSON.stringify(history));
+        localStorage.setItem("horizon-history", JSON.stringify(history));
       }
 
       // Calculate Weekly Avg
@@ -129,7 +129,7 @@ export default function StatsBar() {
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-2 gap-4 xl:w-[480px]">
         {[
           { label: "Wins", value: `${stats.wins}`, icon: Trophy, color: "bg-pastel-pink", iconColor: "text-pastel-pink-foreground" },
-          { label: "Weekly Avg", value: `${Math.round(Object.values(JSON.parse(localStorage.getItem("orbit-history") || "{}")).reduce((a:any, b:any) => a + b, 0) / 7)}%`, icon: Activity, color: "bg-pastel-green", iconColor: "text-pastel-green-foreground" },
+          { label: "Weekly Avg", value: `${Math.round((Object.values(JSON.parse(localStorage.getItem("horizon-history") || "{}")) as number[]).reduce((a: number, b: number) => a + b, 0) / 7)}%`, icon: Activity, color: "bg-pastel-green", iconColor: "text-pastel-green-foreground" },
           { label: "Total Habits", value: stats.habits.toString(), icon: Target, color: "bg-pastel-blue", iconColor: "text-pastel-blue-foreground" },
           { label: "Best Streak", value: `${stats.streak} Days`, icon: Flame, color: "bg-pastel-yellow", iconColor: "text-pastel-yellow-foreground" },
         ].map((item, i) => (

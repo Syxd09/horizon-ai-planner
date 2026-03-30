@@ -37,7 +37,7 @@ const CATEGORIES = [
 
 export default function GoalTracker() {
   const [goals, setGoals] = useState<Goal[]>(() => {
-    const saved = localStorage.getItem("orbit-goals");
+    const saved = localStorage.getItem("horizon-goals");
     return saved ? JSON.parse(saved) : [];
   });
   const [newGoal, setNewGoal] = useState("");
@@ -47,12 +47,12 @@ export default function GoalTracker() {
   const [isGeneratingMilestones, setIsGeneratingMilestones] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("orbit-goals", JSON.stringify(goals));
+    localStorage.setItem("horizon-goals", JSON.stringify(goals));
   }, [goals]);
 
   useEffect(() => {
     const handleStorage = () => {
-      const saved = localStorage.getItem("orbit-goals");
+      const saved = localStorage.getItem("horizon-goals");
       if (saved) setGoals(JSON.parse(saved));
     };
     window.addEventListener("storage", handleStorage);
@@ -148,8 +148,8 @@ export default function GoalTracker() {
   const archiveGoal = (id: string) => {
     const goal = goals.find(g => g.id === id);
     if (goal) {
-      const archived = JSON.parse(localStorage.getItem("orbit-archived") || "[]");
-      localStorage.setItem("orbit-archived", JSON.stringify([goal, ...archived]));
+      const archived = JSON.parse(localStorage.getItem("horizon-archived") || "[]");
+      localStorage.setItem("horizon-archived", JSON.stringify([goal, ...archived]));
       setGoals(goals.filter(g => g.id !== id));
       toast.success("Objective moved to archives");
     }

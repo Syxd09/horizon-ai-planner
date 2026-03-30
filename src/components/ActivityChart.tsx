@@ -6,8 +6,8 @@ interface ActivityChartProps {
 }
 
 export default function ActivityChart({ days = 35 }: ActivityChartProps) {
-  // Simulate data fetching from orbit-history
-  const rawHistory = localStorage.getItem("orbit-history");
+  // Simulate data fetching from horizon-history
+  const rawHistory = localStorage.getItem("horizon-history");
   const history = Array.isArray(JSON.parse(rawHistory || "[]")) ? JSON.parse(rawHistory || "[]") : [];
   
   // Create a map of date -> completion count

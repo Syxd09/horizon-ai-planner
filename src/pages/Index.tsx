@@ -21,10 +21,18 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState("Dashboard");
 
   useEffect(() => {
+    // Data Migration: orbit -> horizon
+    ["user", "goals", "history", "habits", "archived", "notes", "briefing", "roadmap", "intel-history"].forEach(key => {
+      const oldVal = localStorage.getItem(`orbit-${key}`);
+      if (oldVal && !localStorage.getItem(`horizon-${key}`)) {
+        localStorage.setItem(`horizon-${key}`, oldVal);
+        // localStorage.removeItem(`orbit-${key}`); // Keep old for safety during dev
+      }
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsLoggedIn(true);
-        // Sync to localStorage for other components if needed
         const userData = { 
           email: user.email, 
           name: user.displayName || user.email?.split('@')[0],
@@ -32,10 +40,10 @@ export default function Index() {
           tier: "Command",
           photoURL: user.photoURL
         };
-        localStorage.setItem("orbit-user", JSON.stringify(userData));
+        localStorage.setItem("horizon-user", JSON.stringify(userData));
       } else {
         setIsLoggedIn(false);
-        localStorage.removeItem("orbit-user");
+        localStorage.removeItem("horizon-user");
       }
       setIsInitializing(false);
     });
@@ -91,7 +99,7 @@ export default function Index() {
               </div>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Optimizing Orbit</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Optimizing Horizon</span>
               <span className="text-2xl font-black text-foreground mt-2 tracking-tighter italic opacity-20">v3.0.0</span>
             </div>
             <div className="w-48 h-1 bg-muted rounded-full relative overflow-hidden mt-2">
@@ -113,7 +121,7 @@ export default function Index() {
             <div className="p-2 rounded-xl bg-primary/10">
               <Orbit className="w-6 h-6 text-primary" />
             </div>
-            <span className="hidden xl:block text-xl font-black tracking-tighter">ORBIT</span>
+            <span className="hidden xl:block text-xl font-black tracking-tighter">HORIZON</span>
           </div>
           
           <div className="flex-1 space-y-2">
@@ -155,7 +163,7 @@ export default function Index() {
                 >
                   <motion.div className="space-y-2">
                     {(() => {
-                      const userStr = localStorage.getItem("orbit-user");
+                      const userStr = localStorage.getItem("horizon-user");
                       const user = userStr ? JSON.parse(userStr) : { name: "Commander" };
                       const firstName = user.name.split(" ")[0];
                       return (
@@ -165,7 +173,7 @@ export default function Index() {
                             <span className="text-primary">{firstName}!</span>
                           </h1>
                           <p className="text-muted-foreground/60 text-sm font-bold uppercase tracking-widest px-1">
-                            Orbital Status: <span className="text-secondary">Optimal</span>
+                            System Status: <span className="text-secondary">Optimal</span>
                           </p>
                         </>
                       );
@@ -238,13 +246,13 @@ export default function Index() {
                          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Command Streak</span>
                          <div className="text-3xl font-black text-white flex items-center gap-3">
                            {(() => {
-                             const history = JSON.parse(localStorage.getItem("orbit-history") || "[]");
+                             const history = JSON.parse(localStorage.getItem("horizon-history") || "[]");
                              // Simple streak calc
                              return history.length > 5 ? "12 DAYS" : "2 DAYS"; // Mocked for now, but logic could be added
                            })()}
                            <Zap className="w-6 h-6 text-primary fill-primary" />
                          </div>
-                         <p className="text-[10px] font-bold text-white/40 uppercase tracking-tight">Active orbital synchronization maintained.</p>
+                         <p className="text-[10px] font-bold text-white/40 uppercase tracking-tight">Active synchronization maintained.</p>
                       </div>
                     </div>
                   </div>
@@ -263,11 +271,11 @@ export default function Index() {
                   <div className="soft-card p-10 max-w-2xl space-y-8">
                      <div className="flex items-center gap-6">
                         <div className="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center text-3xl text-white font-black shadow-2xl shadow-primary/20">
-                          {localStorage.getItem("orbit-user") ? JSON.parse(localStorage.getItem("orbit-user")!).name.substring(0, 1) : "C"}
+                          {localStorage.getItem("horizon-user") ? JSON.parse(localStorage.getItem("horizon-user")!).name.substring(0, 1) : "C"}
                         </div>
                         <div>
-                          <h3 className="text-2xl font-black">{localStorage.getItem("orbit-user") ? JSON.parse(localStorage.getItem("orbit-user")!).name : "Commander"}</h3>
-                          <p className="text-muted-foreground font-bold">Orbital Tier 01</p>
+                          <h3 className="text-2xl font-black">{localStorage.getItem("horizon-user") ? JSON.parse(localStorage.getItem("horizon-user")!).name : "Commander"}</h3>
+                          <p className="text-muted-foreground font-bold">Horizon Tier 01</p>
                         </div>
                      </div>
                      <Button variant="outline" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-2">Update Credentials</Button>

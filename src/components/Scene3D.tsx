@@ -85,7 +85,7 @@ function FloatingGem({ position, color, speed = 1 }: { position: [number, number
   );
 }
 
-function OrbitalRing({ radius = 3, speed = 0.3, color = "#e8634a" }: { radius?: number; speed?: number; color?: string }) {
+function HorizonRing({ radius = 3, speed = 0.3, color = "#e8634a" }: { radius?: number; speed?: number; color?: string }) {
   const ref = useRef<THREE.Group>(null);
   const dotRef = useRef<THREE.Mesh>(null);
 
@@ -197,8 +197,8 @@ export default function Scene3D({ className }: { className?: string }) {
         <FloatingGem position={[1, 2.5, -1]} color="#2bb5a0" speed={0.8} />
         <FloatingGem position={[-1.5, -3, -3]} color="#e8634a" speed={1.1} />
 
-        <OrbitalRing radius={4} speed={0.15} color="#e8634a" />
-        <OrbitalRing radius={5.5} speed={-0.1} color="#2bb5a0" />
+        <HorizonRing radius={4} speed={0.15} color="#e8634a" />
+        <HorizonRing radius={5.5} speed={-0.1} color="#2bb5a0" />
 
         <Stars radius={30} depth={50} count={1500} factor={3} saturation={0.5} fade speed={0.5} />
         <Particles />

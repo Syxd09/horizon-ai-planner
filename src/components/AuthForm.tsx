@@ -54,7 +54,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
         photoURL: user.photoURL
       };
       
-      localStorage.setItem("orbit-user", JSON.stringify(userData));
+      localStorage.setItem("horizon-user", JSON.stringify(userData));
       toast.success("Access granted via secure link.");
       onLogin();
     } catch (error) {
@@ -88,7 +88,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
           joinedAt: new Date().toISOString(),
           tier: "Command"
         };
-        localStorage.setItem("orbit-user", JSON.stringify(userData));
+        localStorage.setItem("horizon-user", JSON.stringify(userData));
         toast.success("Account initialized. Welcome to the network.");
       } else {
         const result = await signInWithEmailAndPassword(auth, email, password);
@@ -98,8 +98,8 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
           joinedAt: new Date().toISOString(),
           tier: "Command"
         };
-        localStorage.setItem("orbit-user", JSON.stringify(userData));
-        toast.success("Access granted. Synchronizing orbital data.");
+        localStorage.setItem("horizon-user", JSON.stringify(userData));
+        toast.success("Access granted. Synchronizing system data.");
       }
       onLogin();
     } catch (error) {
@@ -125,7 +125,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
           </div>
           <div className="space-y-1">
             <h1 className="text-4xl font-black tracking-tight text-foreground uppercase italic">
-              Orbit
+              Horizon AI Planner
             </h1>
             <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] font-mono">
               {isSignUp ? "System Registration" : "Command Authorization"}
@@ -158,7 +158,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
               <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "email" ? "text-primary" : "text-muted-foreground/20"}`} />
               <Input
                 className="pl-12 bg-muted/30 border-none rounded-2xl h-14 text-sm font-bold focus:ring-1 ring-primary/20"
-                placeholder="email@orbit.com"
+                placeholder="email@horizon.com"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -240,7 +240,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest hover:text-primary transition-colors duration-200"
           >
-            {isSignUp ? "Access existing ID? " : "New to orbital network? "}
+            {isSignUp ? "Access existing ID? " : "New to Horizon network? "}
             <span className="text-primary">{isSignUp ? "Sign In" : "Register"}</span>
           </button>
         </div>

@@ -6,19 +6,19 @@ import { getDailyMission, generateContent } from "@/lib/ai-service";
 import { toast } from "sonner";
 
 export default function AISummary() {
-  const [briefing, setBriefing] = useState<string | null>(() => localStorage.getItem("orbit-briefing"));
-  const [roadmap, setRoadmap] = useState<string | null>(() => localStorage.getItem("orbit-roadmap"));
+  const [briefing, setBriefing] = useState<string | null>(() => localStorage.getItem("horizon-briefing"));
+  const [roadmap, setRoadmap] = useState<string | null>(() => localStorage.getItem("horizon-roadmap"));
   const [isLoading, setIsLoading] = useState(false);
   const [isBuildingRoadmap, setIsBuildingRoadmap] = useState(false);
   const [selectedGoalIds, setSelectedGoalIds] = useState<string[]>([]);
   const [activeGoals, setActiveGoals] = useState<any[]>([]);
   const [commandInput, setCommandInput] = useState("");
-  const [history, setHistory] = useState<any[]>(() => JSON.parse(localStorage.getItem("orbit-intel-history") || "[]"));
+  const [history, setHistory] = useState<any[]>(() => JSON.parse(localStorage.getItem("horizon-intel-history") || "[]"));
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     const updateGoals = () => {
-      const saved = JSON.parse(localStorage.getItem("orbit-goals") || "[]");
+      const saved = JSON.parse(localStorage.getItem("horizon-goals") || "[]");
       const active = saved.filter((g: any) => !g.completed);
       setActiveGoals(active);
     };
@@ -37,23 +37,23 @@ export default function AISummary() {
     };
     const newHistory = [entry, ...history].slice(0, 20); // Keep last 20
     setHistory(newHistory);
-    localStorage.setItem("orbit-intel-history", JSON.stringify(newHistory));
+    localStorage.setItem("horizon-intel-history", JSON.stringify(newHistory));
   };
 
   useEffect(() => {
-    if (briefing) localStorage.setItem("orbit-briefing", briefing);
-    else localStorage.removeItem("orbit-briefing");
+    if (briefing) localStorage.setItem("horizon-briefing", briefing);
+    else localStorage.removeItem("horizon-briefing");
   }, [briefing]);
 
   useEffect(() => {
-    if (roadmap) localStorage.setItem("orbit-roadmap", roadmap);
-    else localStorage.removeItem("orbit-roadmap");
+    if (roadmap) localStorage.setItem("horizon-roadmap", roadmap);
+    else localStorage.removeItem("horizon-roadmap");
   }, [roadmap]);
 
   const fetchBriefing = async () => {
     setIsLoading(true);
     try {
-      const savedNotes = JSON.parse(localStorage.getItem("orbit-notes") || "[]");
+      const savedNotes = JSON.parse(localStorage.getItem("horizon-notes") || "[]");
       const selectedGoals = activeGoals.filter(g => selectedGoalIds.includes(g.id)).map(g => g.title);
       const goalsToUse = selectedGoals.length > 0 ? selectedGoals : activeGoals.map(g => g.title);
       const notes = savedNotes.map((n: any) => n.content);
@@ -272,7 +272,7 @@ export default function AISummary() {
                     <span className="text-sm font-medium text-foreground/80">{step}</span>
                     <Button 
                       onClick={() => {
-                        const savedGoals = JSON.parse(localStorage.getItem("orbit-goals") || "[]");
+                        const savedGoals = JSON.parse(localStorage.getItem("horizon-goals") || "[]");
                         const newGoal = {
                           id: Date.now().toString(),
                           title: step.replace(/^\d+\.\s*/, ''),
@@ -284,7 +284,7 @@ export default function AISummary() {
                           time: "TBD",
                           context: "From AI Roadmap"
                         };
-                        localStorage.setItem("orbit-goals", JSON.stringify([newGoal, ...savedGoals]));
+                        localStorage.setItem("horizon-goals", JSON.stringify([newGoal, ...savedGoals]));
                         window.dispatchEvent(new Event("storage"));
                         toast.success("Step deployed to objectives");
                       }}

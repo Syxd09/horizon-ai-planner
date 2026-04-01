@@ -26,8 +26,6 @@ export default function Index() {
       const oldVal = localStorage.getItem(`orbit-${key}`);
       if (oldVal && !localStorage.getItem(`horizon-${key}`)) {
         localStorage.setItem(`horizon-${key}`, oldVal);
-      if (oldVal && !localStorage.getItem(`horizon-${key}`)) {
-        localStorage.setItem(`horizon-${key}`, oldVal);
       }
     });
 

@@ -21,12 +21,13 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState("Dashboard");
 
   useEffect(() => {
-    // Data Migration: orbit -> horizon
+    // Migrate legacy data
     ["user", "goals", "history", "habits", "archived", "notes", "briefing", "roadmap", "intel-history"].forEach(key => {
       const oldVal = localStorage.getItem(`orbit-${key}`);
       if (oldVal && !localStorage.getItem(`horizon-${key}`)) {
         localStorage.setItem(`horizon-${key}`, oldVal);
-        // localStorage.removeItem(`orbit-${key}`); // Keep old for safety during dev
+      if (oldVal && !localStorage.getItem(`horizon-${key}`)) {
+        localStorage.setItem(`horizon-${key}`, oldVal);
       }
     });
 
